@@ -1,4 +1,4 @@
-#!usr/bin/python3.4
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import sqlite3
@@ -7,10 +7,18 @@ import os
 from datetime import datetime
 import sys
 
+def executeQuery(cursor, query):
+    try:
+        cursor.execute(query)
+    except:
+        print("There is something wrong, probably with the query\n\n"+query)
+
 def history(cursor, today=False):
-    sql="""select url, title, last_visit_date  from moz_historyvisits natural join moz_places where url  like '%http%' and last_visit_date is not null
- order by last_visit_date desc; """
-    cursor.execute(sql)
+    sql="""select url, title, last_visit_date,rev_host  from moz_historyvisits natural join moz_places where url  like '%http%' and last_visit_date is not null
+ order by last_visit_date desc;"""
+
+    executeQuery(cursor,sql)
+
     if today:
         for row in cursor:
             last_visit = datetime.fromtimestamp(row[2]/1000000).strftime('%Y-%m-%d %H:%M:%S')
@@ -19,11 +27,21 @@ def history(cursor, today=False):
                 print("%s %s"%(row[0],last_visit))
     else:
         for row in cursor:
+            last_visit = datetime.fromtimestamp(row[2]/1000000).strftime('%Y-%m-%d %H:%M:%S')
             print("%s %s"%(row[0],last_visit))
 
-def bookmarks(cursor, json=False):
-    cursor.execute ("""select url, moz_places.title, rev_host, frecency, last_visit_date from moz_places  join  moz_bookmarks on moz_bookmarks.fk=moz_places.id
-where moz_places.url  like 'http%' and visit_count>0 order by last_visit_date desc;""")
+def bookmarks(cursor, json=False, pattern=None):
+    theQuery = """select url, moz_places.title, rev_host, frecency, last_visit_date from moz_places  join  moz_bookmarks on moz_bookmarks.fk=moz_places.id
+where visit_count>0 """
+
+    if pattern==None:
+        theQuery+=" and moz_places.url  like 'http%'"
+    else:
+        theQuery+="and moz_places.url like '%"+pattern+"%'"
+
+    theQuery+=" order by dateAdded desc;"
+
+    executeQuery(cursor,theQuery)
 
     string=""
     title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
@@ -31,10 +49,10 @@ where moz_places.url  like 'http%' and visit_count>0 order by last_visit_date de
     bookmarks=[]
 
     for row in cursor:
-        print("%s; %s"%(row[0], datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S')))
+        #print("%s; %s"%(row[0], datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S')))
+        print("%s"%(row[0]))
         if json==True:
             title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
-
             string=""
 
             for row in cursor:
@@ -56,10 +74,10 @@ if __name__=="__main__":
         firefox_path = home_dir + "/.mozilla/firefox/"
     elif sys.platform.startswith('darwin')==True:
         firefox_path = home_dir+'Library/Application Support/Firefox/Profiles/'
-    
+
     profiles = [i for i in os.listdir(firefox_path) if i.endswith('.default')]
     sqlite_path = firefox_path+ profiles[0]+'/places.sqlite'
-     
+
     try:
         connection = sqlite3.connect(sqlite_path)
     except:
@@ -67,7 +85,6 @@ if __name__=="__main__":
         exit(1)
 
     cursor = connection.cursor()
-    history(cursor, today=True)
-    bookmarks(cursor, json=True)
+    #history(cursor)
+    bookmarks(cursor,pattern='go')
     cursor.close()
-
