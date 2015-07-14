@@ -15,11 +15,16 @@ def executeQuery(cursor, query):
     except:
         print("There is something wrong, probably with the query\n\n"+query)
 
-def history(cursor, today=False):
+def history(cursor, today=False, pattern=None):
     ''' Function which extracts history from the sqlite file '''
 
-    sql="""select url, title, last_visit_date,rev_host  from moz_historyvisits natural join moz_places where url  like '%http%' and last_visit_date is not null
- order by last_visit_date desc;"""
+    sql="""select url, title, last_visit_date,rev_host  from moz_historyvisits natural join moz_places where last_visit_date is not null and """
+    if pattern is not None:
+        sql+= "url  like '%"+pattern+"%' and url not like '%google%.co%' and url not like '%duckduckgo.co%' and url not like '%live.com%'\
+        and url not like '%facebook%.com%' and url not like '%gmail.com%'"
+    else:
+        sql+= " url  like 'http%'"
+    sql+=' order by last_visit_date desc;'
 
     executeQuery(cursor,sql)
 
@@ -43,7 +48,7 @@ where visit_count>0 """
     if pattern==None:
         theQuery+=" and moz_places.url  like 'http%'"
     else:
-        theQuery+="and moz_places.url like '%"+pattern+"%'"
+        theQuery+="and moz_places.title like '%"+pattern+"%' and moz_places.url not like '%google.co%' and moz_places not like '%duckduckgo.co%'"
 
     theQuery+=" order by dateAdded desc;"
     executeQuery(cursor,theQuery)
@@ -56,7 +61,7 @@ where visit_count>0 """
     for row in cursor:
         #print("%s; %s"%(row[0], datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S')))
         print("%s"%(row[0]))
-        if json==True:
+        '''if json==True:
             title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
             string=""
 
@@ -68,7 +73,11 @@ where visit_count>0 """
                string+=str(b)+','
 
             bookmarks_json=string
-    if bookmarks_json: print(bookmarks_json)
+
+    if bookmarks_json:
+        file = open('bookmarks.json','w')
+        file.write(bookmarks_json)
+        file.close()'''
 
 def getPath():
     '''Gets the path where the sqlite3 database file is present'''
@@ -84,8 +93,9 @@ def getPath():
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Extract information from firefox's internal database")
-    parser.add_argument('--bkmrk', default="")
-    parser.add_argument('--history', default=0)
+    parser.add_argument('--bm', '-b',default="")
+    parser.add_argument('--hist','-y', default="")
+    #parser.add_argument('--json',default=False) TODO: Later some time
     args = parser.parse_args()
 
     try:
@@ -98,9 +108,9 @@ if __name__=="__main__":
         exit(1)
 
     cursor = connection.cursor()
-    if args.bkmrk is not None:
-        bookmarks(cursor,pattern=args.bkmrk)
-    elif args.history is not None:
-        history(cursor)
+    if args.bm is not '':
+        bookmarks(cursor,pattern=args.bm)
+    if args.hist is not '' :
+        history(cursor, pattern=args.hist)
 
     cursor.close()

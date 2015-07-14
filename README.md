@@ -4,7 +4,7 @@ A small python script for easy access to firefox bookmarks and browsing history
 Usage
 =======
 
-python3 ffs_main.py -bkmrk go
+`python3 ffs_main.py -bkmrk go`
 
 If you want to search all the bookmarks which have the word go somewhere
 
