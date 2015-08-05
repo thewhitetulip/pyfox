@@ -1,5 +1,5 @@
-#!/usr/bin/python3.4
 # -*- coding: utf-8 -*-
+#!/usr/bin/python3.4
 
 import sqlite3
 import os
@@ -7,6 +7,8 @@ import os
 from datetime import datetime
 import sys
 import argparse
+import webbrowser
+
 
 def executeQuery(cursor, query):
     ''' Takes the cursor object and the query, executes it '''
@@ -60,10 +62,12 @@ def bookmarks(cursor, json=False, pattern=None):
     theQuery = """select url, moz_places.title, rev_host, frecency, last_visit_date from moz_places  join  \
     moz_bookmarks on moz_bookmarks.fk=moz_places.id where visit_count>0 """
 
-    if pattern==None:
-        theQuery+=" and moz_places.url  like 'http%'"
-    else:
-        theQuery+=" and moz_places.title like '%"+pattern+"%' and moz_places.url not like '%google.co%' and moz_places.url not like '%duckduckgo.co%'"
+    theQuery+=" and moz_places.url  like 'http%'"
+
+    # if pattern==None:
+    #     theQuery+=" and moz_places.url  like 'http%'"
+    # else:
+    #     theQuery+=" and moz_places.title like '%"+pattern+"%' and moz_places.url not like '%google.co%' and moz_places.url not like '%duckduckgo.co%'"
 
     theQuery+=" order by dateAdded desc;"
     executeQuery(cursor,theQuery)
@@ -72,11 +76,28 @@ def bookmarks(cursor, json=False, pattern=None):
     title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
     bookmarks_json=""
     bookmarks=[]
-
+    a=u""
+    file = open("template.html",'r')
+    lines = file.readlines()
+    html_file = open("filtertable-quick.html","w")
+    for line in lines:
+        print(line)
+        a+=str(line)
+        a+="\n"
     for row in cursor:
         #print("%s; %s"%(row[0], datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S')))
-        print("%s"%(row[0]))
-        '''if json==True:
+        link = row[0]
+        title = row[1]
+        date = str(datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S'))
+        a += "<tr><td><a href='"+link+"'>"+title+"</a></td>"+"<td>"+link+"</td>"+"<td>"+date+"</td></tr>\n"
+        print("%s %s"%(row[0], row[1]))
+    a+="</tbody>\n</table>\n</body>\n</html>"
+
+    html_file.write(a.encode('utf8'))
+    html_file.close()
+    url="filtertable-quick.html"
+    webbrowser.open(url, autoraise=True)
+    '''if json==True:
             title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
             string=""
 
