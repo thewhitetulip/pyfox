@@ -13,7 +13,7 @@ def executeQuery(cursor, query):
     try:
         cursor.execute(query)
     except Exception as e:
-        print("There is something wrong, probably with the query\n\n"+str(e))
+        print("There is something wrong, probably with the query\n\n"+str(e)+"\n "+ query)
 
 def history(cursor, today=False, pattern=None,src=""):
     ''' Function which extracts history from the sqlite file '''
@@ -57,13 +57,13 @@ def history(cursor, today=False, pattern=None,src=""):
 def bookmarks(cursor, json=False, pattern=None):
     ''' Function to extract bookmark related information '''
 
-    theQuery = """select url, moz_places.title, rev_host, frecency, last_visit_date from moz_places  join  moz_bookmarks on moz_bookmarks.fk=moz_places.id
-where visit_count>0 """
+    theQuery = """select url, moz_places.title, rev_host, frecency, last_visit_date from moz_places  join  \
+    moz_bookmarks on moz_bookmarks.fk=moz_places.id where visit_count>0 """
 
     if pattern==None:
         theQuery+=" and moz_places.url  like 'http%'"
     else:
-        theQuery+=" and moz_places.title like '%"+pattern+"%' and moz_places.url not like '%google.co%' and moz_places not like '%duckduckgo.co%'"
+        theQuery+=" and moz_places.title like '%"+pattern+"%' and moz_places.url not like '%google.co%' and moz_places.url not like '%duckduckgo.co%'"
 
     theQuery+=" order by dateAdded desc;"
     executeQuery(cursor,theQuery)
@@ -137,7 +137,7 @@ if __name__=="__main__":
     chrome_cursor = chrome_connection.cursor()
 
     if args.bm is not '':
-        bookmarks(cursor,pattern=args.bm, src="firefox")
+        bookmarks(cursor,pattern=args.bm)
     if args.hist is not '' :
         print("From firefox")
         history(cursor, pattern=args.hist, src="firefox")
