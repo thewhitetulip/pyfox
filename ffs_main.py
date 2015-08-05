@@ -93,7 +93,10 @@ def bookmarks(cursor, json=False, pattern=None):
         print("%s %s"%(row[0], row[1]))
     a+="</tbody>\n</table>\n</body>\n</html>"
 
-    html_file.write(a.encode('utf8'))
+    try:
+        html_file.write(a.encode('utf8'))
+    except:
+        html_file.write(a)
     html_file.close()
     url="filtertable-quick.html"
     webbrowser.open(url, autoraise=True)
@@ -125,6 +128,7 @@ def getPath(browser):
             path = home_dir + "/.mozilla/firefox/"
         elif sys.platform.startswith('darwin')==True:
             path = home_dir+'Library/Application Support/Firefox/Profiles/'
+
     elif browser=='chrome':
         if sys.platform.startswith('win') == True:
             path = home_dir + ''
@@ -144,14 +148,18 @@ if __name__=="__main__":
 
     try:
         firefox_path = getPath('firefox')
+        print(firefox_path)
         profiles = [i for i in os.listdir(firefox_path) if i.endswith('.default')]
         sqlite_path = firefox_path+ profiles[0]+'/places.sqlite'
-        firefox_connection = sqlite3.connect(sqlite_path)
+        if os.path.exists(sqlite_path):
+            firefox_connection = sqlite3.connect(sqlite_path)
+
         #chrome_sqlite_path = '/home/thewhitetulip/.config/chromium/Default/History'
-        chrome_sqlite_path = firefox_path = getPath('chrome')
-        chrome_connection = sqlite3.connect(chrome_sqlite_path)
+        chrome_sqlite_path = getPath('chrome')
+        if os.path.exists(chrome_sqlite_path):
+            chrome_connection = sqlite3.connect(chrome_sqlite_path)
     except Exception as e:
-        print('Something went wrong with places.sqlite ' + str(e))
+        print(str(e))
         exit(1)
 
     cursor = firefox_connection.cursor()
