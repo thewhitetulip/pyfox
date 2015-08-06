@@ -17,8 +17,8 @@ def executeQuery(cursor, query):
         print("There is something wrong, probably with the query\n\n"+str(e)+"\n "+ query)
 
 def openBrowser(url):
-    #webbrowser.open(url, autoraise=True)
-    pass
+    webbrowser.open(url, autoraise=True)
+
 
 def readTemplate():
     """ Reads the html content from the template which will be returned as a string to write in another file """
