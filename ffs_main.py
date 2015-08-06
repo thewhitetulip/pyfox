@@ -3,7 +3,6 @@
 
 import sqlite3
 import os
-#import json
 from datetime import datetime
 import sys
 import argparse
@@ -17,78 +16,83 @@ def executeQuery(cursor, query):
     except Exception as e:
         print("There is something wrong, probably with the query\n\n"+str(e)+"\n "+ query)
 
-def history(cursor, today=False, pattern=None,src=""):
+def openBrowser(url):
+    #webbrowser.open(url, autoraise=True)
+    pass
+
+def readTemplate():
+    """ Reads the html content from the template which will be returned as a string to write in another file """
+    file = open("template.html",'r')
+    lines = file.readlines()
+
+    tmp=u""
+    lines = [line.strip() for line in lines]
+    for line in lines:
+        tmp+=str(line)
+        tmp+="\n"
+    return tmp
+
+def history(cursor,pattern=None,src=""):
     ''' Function which extracts history from the sqlite file '''
+    a=u""
+    a = readTemplate()
     if src=='firefox':
-        sql="""select url, title, last_visit_date,rev_host  from moz_historyvisits natural join moz_places where last_visit_date is not null and """
-        if pattern is not None:
-            sql+= "url  like '%"+pattern+"%' and url not like '%google%.co%' and url not like '%duckduckgo.co%' and url not like '%live.com%'\
-            and url not like '%facebook%.com%' and url not like '%gmail.com%'"
-        else:
-            sql+= " url  like 'http%'"
-        sql+=' order by last_visit_date desc;'
-
-        executeQuery(cursor,sql)
-
-        if today:
-            for row in cursor:
-                last_visit = datetime.fromtimestamp(row[2]/1000000).strftime('%Y-%m-%d %H:%M:%S')
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                if current_time[:10]==last_visit[:10]:
-                    print("%s %s"%(row[0],last_visit))
-        else:
-            for row in cursor:
-                last_visit = datetime.fromtimestamp(row[2]/1000000).strftime('%Y-%m-%d %H:%M:%S')
-                print("%s %s"%(row[0],last_visit))
-    elif src=='chrome':
-        sql = "SELECT urls.url, urls.title, urls.visit_count, \
-        urls.typed_count, datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime'), urls.hidden,\
-        visits.visit_time, visits.from_visit, visits.transition FROM urls, visits\
-         WHERE  urls.id = visits.url"
+        sql="""select url, title, last_visit_date,rev_host  from moz_historyvisits natural join moz_places where
+        last_visit_date is not null and url  like 'http%' and title is not null
+        and url not like '%google.com%' and url not like '%gmail.com%' and url not like '%facebook.com%' and
+        url not like '%amazon.com%' and url not like '%127.0.0.1%' and url not like '%google.com%' and url not like '%duckduckgo.com%'
+        and url not like '%change.org%' and url not like '%twitter.com%' and url not like '%google.co.in%' """
 
         if pattern is not None:
-            sql += " and title like '%"+ pattern+"%'"
-        #sql+=" order by last_visit_time desc"
+            sql+=" and url like '%"+pattern+"%' "
+        sql+=" order by last_visit_date desc;"
+
 
         executeQuery(cursor,sql)
 
         for row in cursor:
+            last_visit = datetime.fromtimestamp(row[2]/1000000).strftime('%Y-%m-%d %H:%M:%S')
+            link = row[0]
+            title = row[1]
+            #a += "<tr><td><a href='"+str(link)+"'>"+str(title)+"</a></td>"+"<td>"+str(link)+"</td>"+"<td>"+str(last_visit)+"</td></tr>\n"
 
+            a += "<tr><td><a href='"+str(link)+"'>"+str(title[:100])+"</a></td>"+"<td>"+str(last_visit)+"</td>"+"<td>"+str(link[:100])+"</td>"+"</tr>\n"
+            #print(a)
+
+    if src=='chrome':
+        sql = "SELECT urls.url, urls.title, urls.visit_count, \
+        urls.typed_count, datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime'), urls.hidden,\
+        visits.visit_time, visits.from_visit, visits.transition FROM urls, visits\
+         WHERE  urls.id = visits.url and urls.title is not null order by last_visit_time desc "
+
+        executeQuery(cursor,sql)
+        for row in cursor:
             print("%s %s"%(row[0],row[4]))
 
-def bookmarks(cursor, json=False, pattern=None):
+    a+="</tbody>\n</table>\n</body>\n</html>"
+    html_file = open("history.html",'w')
+
+    html_file.write(a)
+    html_file.close()
+    openBrowser("history.html")
+
+def bookmarks(cursor, pattern=None):
     ''' Function to extract bookmark related information '''
 
     theQuery = """select url, moz_places.title, rev_host, frecency, last_visit_date from moz_places  join  \
-    moz_bookmarks on moz_bookmarks.fk=moz_places.id where visit_count>0 """
+    moz_bookmarks on moz_bookmarks.fk=moz_places.id where visit_count>0 and moz_places.url  like 'http%'
+    order by dateAdded desc;"""
 
-    theQuery+=" and moz_places.url  like 'http%'"
-
-    # if pattern==None:
-    #     theQuery+=" and moz_places.url  like 'http%'"
-    # else:
-    #     theQuery+=" and moz_places.title like '%"+pattern+"%' and moz_places.url not like '%google.co%' and moz_places.url not like '%duckduckgo.co%'"
-
-    theQuery+=" order by dateAdded desc;"
     executeQuery(cursor,theQuery)
 
-    string=""
-    title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
-    bookmarks_json=""
-    bookmarks=[]
     a=u""
-    file = open("template.html",'r')
-    lines = file.readlines()
-    html_file = open("filtertable-quick.html","w")
-    for line in lines:
-        print(line)
-        a+=str(line)
-        a+="\n"
+    a = readTemplate()
+    html_file = open("bookmarks.html",'w')
     for row in cursor:
-        #print("%s; %s"%(row[0], datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S')))
         link = row[0]
         title = row[1]
         date = str(datetime.fromtimestamp(row[4]/1000000).strftime('%Y-%m-%d %H:%M:%S'))
+
         a += "<tr><td><a href='"+link+"'>"+title+"</a></td>"+"<td>"+link+"</td>"+"<td>"+date+"</td></tr>\n"
         print("%s %s"%(row[0], row[1]))
     a+="</tbody>\n</table>\n</body>\n</html>"
@@ -98,25 +102,7 @@ def bookmarks(cursor, json=False, pattern=None):
     except:
         html_file.write(a)
     html_file.close()
-    url="filtertable-quick.html"
-    webbrowser.open(url, autoraise=True)
-    '''if json==True:
-            title_bookmarks=['url', 'title', 'rev_host', 'frecency', 'last_visit_date']
-            string=""
-
-            for row in cursor:
-                blist = dict(zip(title_bookmarks,row))
-                bookmarks.append(blist)
-
-            for b in bookmarks:
-               string+=str(b)+','
-
-            bookmarks_json=string
-
-    if bookmarks_json:
-        file = open('bookmarks.json','w')
-        file.write(bookmarks_json)
-        file.close()'''
+    openBrowser("bookmarks.html")
 
 def getPath(browser):
     '''Gets the path where the sqlite3 database file is present'''
@@ -143,12 +129,10 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Extract information from firefox's internal database")
     parser.add_argument('--bm', '-b',default="")
     parser.add_argument('--hist','-y', default="")
-    #parser.add_argument('--json',default=False) TODO: Later some time
     args = parser.parse_args()
 
     try:
         firefox_path = getPath('firefox')
-        print(firefox_path)
         profiles = [i for i in os.listdir(firefox_path) if i.endswith('.default')]
         sqlite_path = firefox_path+ profiles[0]+'/places.sqlite'
         if os.path.exists(sqlite_path):
@@ -170,8 +154,8 @@ if __name__=="__main__":
     if args.hist is not '' :
         print("From firefox")
         history(cursor, pattern=args.hist, src="firefox")
-        print("From chrome")
-        history(chrome_cursor, pattern=args.hist, src="chrome")
+        #print("From chrome")
+        #history(chrome_cursor, src="chrome")
 
     cursor.close()
     chrome_cursor.close()

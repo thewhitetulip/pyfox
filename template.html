@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search your bookmarks</title>
+    <title>Pyfox</title>
     <style>
     /* generic table styling */
     table { border-collapse: collapse; }
@@ -12,7 +12,6 @@
     td { border-bottom: 1px solid #ccc; }
     table a { text-decoration: none; }
     table a:hover { text-decoration: underline; }
-    tr :last-child { text-align: right; }
 
     /* hide content from view but not from searching */
     .hidden { display: none; }
@@ -23,24 +22,25 @@
     td.alt { background-color: #ffc; background-color: rgba(255, 255, 0, 0.2); }
     </style>
 
-    <p>Note that while the filter is case-insensitive</p>
-
-    <script src="jquery.min.js"></script>
+       <script src="jquery.min.js"></script>
     <script src="jquery.filtertable.min.js"></script>
     <script>
     $(document).ready(function() {
-        $('table').filterTable();
+        $('table').filterTable({ // apply filterTable to all tables on this page
+            quickList: ['python', 'go', 'golang',] // add some shortcut searches
+        });
     });
     </script>
+
 </head>
 <body>
-    <h1>PyFOX</h1>
+    <h1>Pyfox</h1>
     <table>
         <thead>
             <tr>
-                <th scope="col">title</th>
                 <th scope="col">link</th>
-                <th scope="col">time</th>
+                <th scope="col">date</th>
+                <th scope="col">url</th>
             </tr>
         </thead>
         <tbody>
