@@ -49,8 +49,8 @@ def history(cursor, pattern=None, src=""):
         sql = """select url, title, last_visit_date,rev_host
         from moz_historyvisits natural join moz_places where
         last_visit_date is not null and url  like 'http%' and title is not null
-        and url not like '%google.com%' and url not like '%gmail.com%' and 
-        url not like '%facebook.com%' and url not like '%amazon.com%' and 
+        and url not like '%google.com%' and url not like '%gmail.com%' and
+        url not like '%facebook.com%' and url not like '%amazon.com%' and
         url not like '%127.0.0.1%' and url not like '%google.com%'
         and url not like '%duckduckgo.com%'
         and url not like '%change.org%' and url not like
