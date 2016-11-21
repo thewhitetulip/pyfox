@@ -123,22 +123,21 @@ def bookmarks(cursor, pattern=None):
 
 def get_path(browser):
     '''Gets the path where the sqlite3 database file is present'''
-    home_dir = os.environ['HOME']
     if browser == 'firefox':
         if sys.platform.startswith('win') == True:
-            path = home_dir + '\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\'
+            path = '\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\'
         elif sys.platform.startswith('linux') == True:
-            path = home_dir + "/.mozilla/firefox/"
+            path = "/.mozilla/firefox/"
         elif sys.platform.startswith('darwin') == True:
-            path = home_dir + 'Library/Application Support/Firefox/Profiles/'
+            path = '/Library/Application Support/Firefox/Profiles/'
 
-    elif browser == 'chrome':
-        if sys.platform.startswith('win') == True:
-            path = home_dir + ''
-        elif sys.platform.startswith('linux') == True:
-            path = home_dir + "/.config/chromium/Default/History"
-        elif sys.platform.startswith('darwin') == True:
-            path = home_dir+''
+    #elif browser == 'chrome':
+    #    if sys.platform.startswith('win') == True:
+    #        path = ''
+    #    elif sys.platform.startswith('linux') == True:
+    #        path =  "/.config/chromium/Default/History"
+    #    elif sys.platform.startswith('darwin') == True:
+    #        path = ''
 
     return path
 
@@ -151,21 +150,25 @@ if __name__ == "__main__":
 
     try:
         firefox_path = get_path('firefox')
+        home_dir = os.environ['HOME']
+        firefox_path = home_dir + firefox_path; print(firefox_path)
         profiles = [i for i in os.listdir(firefox_path) if i.endswith('.default')]
         sqlite_path = firefox_path+ profiles[0]+'/places.sqlite'
+        print(sqlite_path)
         if os.path.exists(sqlite_path):
             firefox_connection = sqlite3.connect(sqlite_path)
 
         #chrome_sqlite_path = '/home/thewhitetulip/.config/chromium/Default/History'
-        chrome_sqlite_path = get_path('chrome')
-        if os.path.exists(chrome_sqlite_path):
-            chrome_connection = sqlite3.connect(chrome_sqlite_path)
+        #chrome_sqlite_path = get_path('chrome')
+        #if os.path.exists(chrome_sqlite_path):
+        #    chrome_connection = sqlite3.connect(chrome_sqlite_path)
     except Exception as error:
+        print("_main_")
         print(str(error))
         exit(1)
 
     cursor = firefox_connection.cursor()
-    CHROME_CURSOR = chrome_connection.cursor()
+    #CHROME_CURSOR = chrome_connection.cursor()
 
     if args.bm is not '':
         bookmarks(cursor, pattern=args.bm)
@@ -176,4 +179,4 @@ if __name__ == "__main__":
         #history(CHROME_CURSOR, src="chrome")
 
     cursor.close()
-    CHROME_CURSOR.close()
+    #CHROME_CURSOR.close()
