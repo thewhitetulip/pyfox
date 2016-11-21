@@ -14,7 +14,7 @@ Usage
 `python3 pyfox.py -b True` to search bookmarks
 This will open a webpage which can be used to search the bookmarks which can be shown by the video below
 
-`python ffs_main.py --hist localhost` to search history
+`python pyfox.py --hist localhost` to search history
 
 If you want to search all the bookmarks which have the word go somewhere
 
