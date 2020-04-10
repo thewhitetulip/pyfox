@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 '''
 author: @thewhitetulip
 
@@ -5,8 +7,6 @@ A small python script to extract browsing history and bookmarks from  various
 browsers, currently supports firefox and chromium (partially)
 
 '''
-# -*- coding: utf-8 -*-
-#!/usr/bin/python3.4
 
 import sqlite3
 import os
